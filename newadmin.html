@@ -1,0 +1,2161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Manager - Admin Panel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --primary-color: #4f46e5; /* Indigo */
+            --primary-dark: #3730a3;
+            --secondary-color: #10b981; /* Emerald */
+            --accent-color: #f59e0b; /* Amber */
+            --danger-color: #ef4444; /* Red */
+            --bg-light: #f9fafb;
+            --bg-medium: #e5e7eb;
+            --text-dark: #1f2937;
+            --text-medium: #4b5563;
+            --border-color: #d1d5db;
+            --shadow-light: rgba(0, 0, 0, 0.05);
+            --shadow-medium: rgba(0, 0, 0, 0.15);
+            --info-color: #3b82f6; /* Blue for info */
+            --success-color: #22c55e; /* Green for success */
+            --warning-color: #eab308; /* Yellow for warning */
+            --error-color: #ef4444; /* Red for error */
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            display: flex;
+            min-height: 100vh;
+            background-color: var(--bg-light);
+            color: var(--text-dark);
+        }
+
+        .sidebar {
+            width: 250px;
+            background-color: var(--text-dark); /* Dark background */
+            color: white;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            box-shadow: 2px 0 10px var(--shadow-medium);
+            position: fixed;
+            height: 100%;
+            transition: transform 0.3s ease-in-out;
+            z-index: 1000;
+        }
+        .sidebar.hidden {
+            transform: translateX(-250px);
+        }
+        .main-content {
+            margin-left: 250px;
+            flex-grow: 1;
+            padding: 20px;
+            transition: margin-left 0.3s ease-in-out;
+        }
+        .main-content.expanded {
+            margin-left: 0;
+        }
+
+        .sidebar h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: white;
+        }
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+            flex-grow: 1;
+        }
+        .sidebar ul li {
+            margin-bottom: 10px;
+        }
+        .sidebar ul li a {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            color: #d1d5db; /* Light gray text */
+            text-decoration: none;
+            border-radius: 8px;
+            transition: background-color 0.3s ease, color 0.3s ease;
+            font-weight: 500;
+        }
+        .sidebar ul li a i {
+            margin-right: 10px;
+            font-size: 1.1rem;
+        }
+        .sidebar ul li a:hover,
+        .sidebar ul li a.active {
+            background-color: #374151; /* Darker gray on hover/active */
+            color: #ffffff;
+        }
+        .sidebar-footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #374151; /* Border for footer */
+        }
+        .sidebar-footer .user-info {
+            display: flex;
+            align-items: center;
+            color: #d1d5db;
+            margin-bottom: 15px;
+        }
+        .sidebar-footer .user-info img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 10px;
+            border: 2px solid var(--primary-color);
+        }
+        .sidebar-footer .user-info div span {
+            display: block;
+        }
+        .sidebar-footer .user-info div span:first-child {
+            font-weight: 600;
+            color: #ffffff;
+        }
+        .logout-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 12px 15px;
+            background-color: var(--danger-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: background-color 0.3s ease;
+        }
+        .logout-btn:hover {
+            background-color: #b91c1c;
+        }
+        .logout-btn i {
+            margin-right: 8px;
+        }
+
+        /* Main Content Header */
+        .dashboard-header {
+            background-color: white;
+            padding: 20px 30px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 12px var(--shadow-light);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .dashboard-header h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .dashboard-header h1 i {
+            color: var(--primary-color);
+        }
+        .dashboard-header .date-display {
+            font-size: 1.1rem;
+            color: var(--text-medium);
+            font-weight: 500;
+        }
+
+        /* Card Section General Style */
+        .card-section {
+            background-color: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px var(--shadow-light);
+            margin-bottom: 30px;
+        }
+        .card-section h2 {
+            font-size: 1.8rem;
+            color: var(--text-dark);
+            margin-bottom: 25px;
+            border-bottom: 2px solid var(--bg-medium);
+            padding-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .card-section h2 i {
+            color: var(--primary-color);
+        }
+
+        /* Stats Cards */
+        .dashboard-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background-color: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px var(--shadow-light);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .stat-card .icon-wrapper {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.8rem;
+            color: white;
+        }
+        .stat-card.total .icon-wrapper { background-color: var(--primary-color); }
+        .stat-card.active-users .icon-wrapper { background-color: var(--secondary-color); }
+        .stat-card.new-users .icon-wrapper { background-color: var(--info-color); }
+        .stat-card.pending-forms .icon-wrapper { background-color: var(--accent-color); }
+
+        .stat-card .details h3 {
+            font-size: 1.1rem;
+            color: var(--text-medium);
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        .stat-card .details p {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin: 0;
+        }
+
+        /* Table Styles */
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-top: 20px;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px var(--shadow-light);
+        }
+        th, td {
+            padding: 15px 20px;
+            text-align: left;
+            border-bottom: 1px solid var(--bg-medium);
+        }
+        th {
+            background-color: var(--bg-light);
+            font-weight: 600;
+            color: var(--text-medium);
+            text-transform: uppercase;
+            font-size: 0.9em;
+        }
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+        tbody tr:hover {
+            background-color: #f0f4f8;
+        }
+
+        /* Input styles within tables/forms */
+        .task-input {
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            width: 100%;
+            font-size: 0.95em;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .task-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
+        }
+
+        /* Action Buttons */
+        .action-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background-color 0.3s ease;
+        }
+        .action-btn:hover {
+            background-color: var(--primary-dark);
+        }
+        .action-btn.green { background-color: var(--secondary-color); }
+        .action-btn.green:hover { background-color: #0d9263; }
+        .action-btn.red { background-color: var(--danger-color); }
+        .action-btn.red:hover { background-color: #d12f2f; }
+        .action-btn.orange { background-color: var(--accent-color); }
+        .action-btn.orange:hover { background-color: #d97706; }
+        .action-btn.blue { background-color: var(--info-color); }
+        .action-btn.blue:hover { background-color: #2563eb; }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1001; /* Above sidebar */
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.6);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: white;
+            margin: auto;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.4);
+            width: 90%;
+            max-width: 600px;
+            position: relative;
+            animation: fadeIn 0.3s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .close-button {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            position: absolute;
+            top: 15px;
+            right: 20px;
+        }
+        .close-button:hover,
+        .close-button:focus {
+            color: #000;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+        .form-group input[type="text"],
+        .form-group textarea,
+        .form-group input[type="date"],
+        .form-group input[type="time"],
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-sizing: border-box;
+            background-color: #ffffff;
+            color: var(--text-dark);
+        }
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        .modal .modal-footer {
+            margin-top: 20px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        .modal .modal-footer button {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .modal .modal-footer button.cancel {
+            background-color: var(--bg-medium);
+            color: var(--text-dark);
+            border: none;
+        }
+        .modal .modal-footer button.cancel:hover {
+            background-color: #cbd5e1;
+        }
+
+        /* Custom Alert (Toast) */
+        #customAlert {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+            z-index: 10000;
+        }
+        #customAlert.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        #customAlert .alert-icon {
+            font-size: 1.5rem;
+        }
+        #customAlert .alert-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        #customAlert .alert-message {
+            font-size: 0.9em;
+        }
+        #customAlert.success {
+            border-left: 5px solid var(--success-color);
+        }
+        #customAlert.success .alert-icon { color: var(--success-color); }
+        #customAlert.error {
+            border-left: 5px solid var(--error-color);
+        }
+        #customAlert.error .alert-icon { color: var(--error-color); }
+        #customAlert.info {
+            border-left: 5px solid var(--info-color);
+        }
+        #customAlert.info .alert-icon { color: var(--info-color); }
+        #customAlert.warning {
+            border-left: 5px solid var(--warning-color);
+        }
+        #customAlert.warning .alert-icon { color: var(--warning-color); }
+
+        /* Loading Overlay */
+        #loadingOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10002;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        #loadingOverlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        .spinner {
+            border: 4px solid var(--primary-color);
+            border-top: 4px solid transparent;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Mobile Menu Button */
+        .mobile-menu-btn {
+            display: none;
+            position: fixed;
+            top: 18px;
+            left: 18px;
+            z-index: 1101;
+            background-color: var(--primary-color);
+            color: #fff;
+            border: none;
+            border-radius: 50%;
+            width: 48px;
+            height: 48px;
+            font-size: 22px;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(79, 70, 229, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s ease;
+        }
+        .mobile-menu-btn:hover {
+            background-color: var(--primary-dark);
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-250px);
+            }
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            .main-content {
+                margin-left: 0;
+            }
+            .main-content.shifted {
+                margin-left: 250px;
+            }
+            .dashboard-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+                padding: 15px;
+            }
+            .dashboard-header h1 {
+                font-size: 1.8rem;
+            }
+            .dashboard-stats {
+                grid-template-columns: 1fr;
+            }
+            .card-section {
+                padding: 20px;
+            }
+            .card-section h2 {
+                font-size: 1.5rem;
+            }
+            th, td {
+                padding: 10px 15px;
+            }
+            .mobile-menu-btn {
+                display: flex;
+            }
+            /* Table responsiveness for smaller screens */
+            table, thead, tbody, th, td, tr {
+                display: block;
+            }
+            thead tr {
+                position: absolute;
+                top: -9999px;
+                left: -9999px;
+            }
+            tr {
+                border: 1px solid var(--bg-medium);
+                margin-bottom: 10px;
+                border-radius: 8px;
+                overflow: hidden;
+            }
+            td {
+                border: none;
+                position: relative;
+                padding-left: 50%;
+                text-align: right;
+            }
+            td::before {
+                content: attr(data-label);
+                position: absolute;
+                left: 0;
+                width: 45%;
+                padding-left: 15px;
+                font-weight: 600;
+                text-align: left;
+                white-space: nowrap;
+            }
+            td:first-child {
+                text-align: left;
+            }
+            td:first-child::before {
+                display: none;
+            }
+            .table-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .table-controls input,
+            .table-controls select,
+            .table-controls button {
+                width: 100%;
+            }
+            .table-controls input {
+                max-width: none; /* Override max-width for responsiveness */
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="mobile-menu-btn" id="mobileMenuBtn">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <div class="sidebar" id="sidebar">
+        <h2>Admin Panel</h2>
+        <ul>
+            <li><a href="#" data-section="dashboard" class="active"><i class="fas fa-chart-line"></i> Dashboard</a></li>
+            <li><a href="#" data-section="users"><i class="fas fa-users"></i> User Management</a></li>
+            <li><a href="#" data-section="tasks"><i class="fas fa-edit"></i> Task Management</a></li>
+            <li><a href="#" data-section="forms"><i class="fas fa-file-alt"></i> Form Submissions</a></li>
+            <li><a href="#" data-section="chat"><i class="fas fa-comments"></i> Admin Chat</a></li>
+            <li><a href="#" data-section="logs"><i class="fas fa-history"></i> Activity Logs</a></li>
+        </ul>
+        <div class="sidebar-footer">
+            <div class="user-info">
+                <img src="https://via.placeholder.com/40/4f46e5/ffffff?text=A" alt="Admin Avatar">
+                <div>
+                    <span id="adminUsernameDisplay">Admin</span>
+                    <small id="adminEmailDisplay">admin@example.com</small>
+                </div>
+            </div>
+            <button class="logout-btn" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</button>
+        </div>
+    </div>
+
+    <div class="main-content" id="mainContent">
+        <div class="dashboard-header">
+            <h1><i class="fas fa-tachometer-alt"></i> Admin Dashboard</h1>
+            <div class="date-display" id="currentDateDisplay"></div>
+        </div>
+
+        <div id="customAlert" class="hidden">
+            <div class="alert-icon"></div>
+            <div>
+                <div class="alert-title"></div>
+                <div class="alert-message"></div>
+            </div>
+        </div>
+
+        <div id="loadingOverlay" class="hidden">
+            <div class="spinner"></div>
+        </div>
+
+        <section id="dashboard" class="card-section active-section">
+            <h2><i class="fas fa-chart-line"></i> Dashboard Overview</h2>
+            <div class="dashboard-stats">
+                <div class="stat-card total">
+                    <div class="icon-wrapper"><i class="fas fa-users"></i></div>
+                    <div class="details">
+                        <h3>Total Users</h3>
+                        <p id="totalUsersCount">0</p>
+                    </div>
+                </div>
+                <div class="stat-card active-users">
+                    <div class="icon-wrapper"><i class="fas fa-user-check"></i></div>
+                    <div class="details">
+                        <h3>Active Users</h3>
+                        <p id="activeUsersCount">0</p>
+                    </div>
+                </div>
+                <div class="stat-card new-users">
+                    <div class="icon-wrapper"><i class="fas fa-user-plus"></i></div>
+                    <div class="details">
+                        <h3>New Users (Today)</h3>
+                        <p id="newUsersTodayCount">0</p>
+                    </div>
+                </div>
+                <div class="stat-card pending-forms">
+                    <div class="icon-wrapper"><i class="fas fa-file-invoice"></i></div>
+                    <div class="details">
+                        <h3>Pending Forms</h3>
+                        <p id="pendingFormsCount">0</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="users" class="card-section" style="display: none;">
+            <h2><i class="fas fa-users"></i> User Management</h2>
+            <div class="table-controls mb-4 flex flex-wrap items-center gap-4">
+                <input type="text" id="searchInput" placeholder="Search users by name or email..." class="p-2 border rounded-md shadow-sm flex-grow max-w-sm">
+                <select id="statusFilter" class="p-2 border rounded-md shadow-sm">
+                    <option value="all">All Statuses</option>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                </select>
+                <select id="roleFilter" class="p-2 border rounded-md shadow-sm">
+                    <option value="all">All Roles</option>
+                    <option value="user">User</option>
+                    <option value="admin">Admin</option>
+                </select>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full bg-white rounded-lg shadow overflow-hidden">
+                    <thead>
+                        <tr class="bg-gray-100 text-left text-gray-600 uppercase text-sm leading-normal">
+                            <th class="py-3 px-6">Username</th>
+                            <th class="py-3 px-6">Email</th>
+                            <th class="py-3 px-6">Role</th>
+                            <th class="py-3 px-6">Status</th>
+                            <th class="py-3 px-6">Last Login</th>
+                            <th class="py-3 px-6 text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTable" class="text-gray-700 text-sm font-light">
+                        </tbody>
+                </table>
+            </div>
+            <p id="noUsersMessage" class="text-center text-gray-500 mt-4" style="display: none;">No users found.</p>
+        </section>
+
+        <section id="tasks" class="card-section" style="display: none;">
+            <h2><i class="fas fa-edit"></i> Task Management</h2>
+            <div class="table-controls mb-4 flex flex-wrap items-center gap-4">
+                <input type="text" id="taskSearchInput" placeholder="Search tasks by name or user..." class="p-2 border rounded-md shadow-sm flex-grow max-w-sm">
+                <select id="taskStatusFilter" class="p-2 border rounded-md shadow-sm">
+                    <option value="all">All Statuses</option>
+                    <option value="pending">Pending</option>
+                    <option value="active">In Progress</option>
+                    <option value="completed">Completed</option>
+                </select>
+                <button id="addNewTaskBtn" class="action-btn bg-primary-color text-white px-4 py-2 rounded-md hover:bg-primary-dark transition">
+                    <i class="fas fa-plus mr-2"></i> Add New Task
+                </button>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full bg-white rounded-lg shadow overflow-hidden">
+                    <thead>
+                        <tr class="bg-gray-100 text-left text-gray-600 uppercase text-sm leading-normal">
+                            <th class="py-3 px-6">User</th>
+                            <th class="py-3 px-6">Task Name</th>
+                            <th class="py-3 px-6">Due Date</th>
+                            <th class="py-3 px-6">Due Time</th>
+                            <th class="py-3 px-6">Status</th>
+                            <th class="py-3 px-6 text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="editableTasksTable" class="text-gray-700 text-sm font-light">
+                        </tbody>
+                </table>
+            </div>
+            <p id="noTasksMessage" class="text-center text-gray-500 mt-4" style="display: none;">No tasks found.</p>
+        </section>
+
+
+        <section id="forms" class="card-section" style="display: none;">
+            <h2><i class="fas fa-file-alt"></i> Form Submissions</h2>
+            <div class="table-controls mb-4 flex items-center gap-4">
+                <input type="text" id="formSearchInput" placeholder="Search forms by user or title..." class="p-2 border rounded-md shadow-sm flex-grow max-w-sm">
+                <select id="formStatusFilter" class="p-2 border rounded-md shadow-sm">
+                    <option value="all">All Statuses</option>
+                    <option value="pending">Pending</option>
+                    <option value="active">Active</option>
+                    <option value="completed">Completed</option>
+                </select>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full bg-white rounded-lg shadow overflow-hidden">
+                    <thead>
+                        <tr class="bg-gray-100 text-left text-gray-600 uppercase text-sm leading-normal">
+                            <th class="py-3 px-6">User</th>
+                            <th class="py-3 px-6">Title</th>
+                            <th class="py-3 px-6">Description</th>
+                            <th class="py-3 px-6">Points</th>
+                            <th class="py-3 px-6">Due Date</th>
+                            <th class="py-3 px-6">Status</th>
+                            <th class="py-3 px-6">Created On</th>
+                            <th class="py-3 px-6 text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="formsTable" class="text-gray-700 text-sm font-light">
+                        </tbody>
+                </table>
+            </div>
+            <p id="noFormsMessage" class="text-center text-gray-500 mt-4" style="display: none;">No form submissions found.</p>
+        </section>
+
+        <section id="chat" class="card-section" style="display: none;">
+            <h2><i class="fas fa-comments"></i> Admin Chat</h2>
+            <div class="chat-container bg-gray-100 p-4 rounded-lg shadow-inner flex flex-col h-[500px]">
+                <div class="chat-messages flex-grow overflow-y-auto mb-4 p-2 bg-white rounded-md border border-gray-200" id="chatMessages">
+                    </div>
+                <div class="chat-input flex gap-2">
+                    <input type="text" id="messageInput" placeholder="Type your message..." class="flex-grow p-3 border rounded-md text-sm">
+                    <button id="sendMessageBtn" class="action-btn bg-primary-color text-white px-5 py-3 rounded-md"><i class="fas fa-paper-plane"></i> Send</button>
+                </div>
+            </div>
+        </section>
+
+        <section id="logs" class="card-section" style="display: none;">
+            <h2><i class="fas fa-history"></i> Activity Logs</h2>
+            <div class="log-entries space-y-3" id="logEntries">
+                </div>
+            <p id="noLogsMessage" class="text-center text-gray-500 mt-4" style="display: none;">No activity logs found.</p>
+        </section>
+
+        <div id="assignTaskModal" class="modal">
+            <div class="modal-content">
+                <span class="close-button" onclick="closeModal('assignTaskModal')">&times;</span>
+                <h2 id="assignTaskModalTitle">Assign New Task</h2>
+                <form id="assignTaskForm">
+                    <div class="form-group">
+                        <label for="userSelect">Assign To User:</label>
+                        <select id="userSelect" class="w-full p-2 border rounded"></select>
+                        <span id="taskUserNameSpan" class="text-sm text-gray-600 ml-2"></span>
+                    </div>
+                    <div class="form-group">
+                        <label for="taskTitleInput">Task Title:</label>
+                        <input type="text" id="taskTitleInput" placeholder="e.g., Complete Project Report" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="taskDescriptionTextarea">Description:</label>
+                        <textarea id="taskDescriptionTextarea" placeholder="Detailed description of the task..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="taskPointsAdminInput">Points:</label>
+                        <input type="number" id="taskPointsAdminInput" value="30" min="1" required>
+                    </div>
+                    <div class="form-group flex flex-col sm:flex-row sm:gap-4">
+                        <div class="flex-1 mb-3 sm:mb-0">
+                            <label for="taskDueDateInput">Due Date:</label>
+                            <input type="date" id="taskDueDateInput" required>
+                        </div>
+                        <div class="flex-1">
+                            <label for="taskDueTimeInput">Due Time:</label>
+                            <input type="time" id="taskDueTimeInput">
+                        </div>
+                    </div>
+                    <div class="form-group flex items-center mb-4">
+                        <input type="checkbox" id="taskLockedCheckbox" class="mr-2">
+                        <label for="taskLockedCheckbox" class="mb-0 cursor-pointer">Lock task until due date?</label>
+                    </div>
+                    <div id="lockTimeGroup" class="form-group" style="display: none;">
+                        <label for="lockUntilTimeInput">Lock until (Time on Due Date):</label>
+                        <input type="time" id="lockUntilTimeInput">
+                    </div>
+                    <p id="assignTaskMessage" class="text-red-500 text-sm mt-2"></p>
+                    <div class="modal-footer">
+                        <button type="button" class="cancel" onclick="closeModal('assignTaskModal')">Cancel</button>
+                        <button type="submit" class="action-btn bg-primary-color" id="assignTaskBtn">Assign Task</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="viewFormModal" class="modal">
+            <div class="modal-content">
+                <span class="close-button" onclick="closeModal('viewFormModal')">&times;</span>
+                <h2>Form Details</h2>
+                <div class="form-group">
+                    <label>Assigned To:</label>
+                    <p id="viewFormAssignedTo"></p>
+                </div>
+                <div class="form-group">
+                    <label>Title:</label>
+                    <p id="viewFormTitle"></p>
+                </div>
+                <div class="form-group">
+                    <label>Description:</label>
+                    <p id="viewFormDescription"></p>
+                </div>
+                <div class="form-group">
+                    <label>Points:</label>
+                    <p id="viewFormPoints"></p>
+                </div>
+                <div class="form-group">
+                    <label>Due Date:</label>
+                    <p id="viewFormDueDate"></p>
+                </div>
+                <div class="form-group">
+                    <label>Status:</label>
+                    <p id="viewFormStatus"></p>
+                </div>
+                <div class="form-group">
+                    <label>Created By:</label>
+                    <p id="viewFormCreatedBy"></p>
+                </div>
+                <div class="form-group">
+                    <label>Created On:</label>
+                    <p id="viewFormCreatedOn"></p>
+                </div>
+                 <div class="form-group" id="viewFormCompletedAtGroup" style="display:none;">
+                    <label>Completed On:</label>
+                    <p id="viewFormCompletedAt"></p>
+                </div>
+                <div class="form-group">
+                    <label for="formAdminNotes">Admin Notes (visible to user):</label>
+                    <textarea id="formAdminNotes" class="w-full p-2 border rounded-md"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="action-btn bg-green-500" id="updateFormStatusBtn">Update Status</button>
+                    <button type="button" class="action-btn bg-primary-color" id="saveAdminNotesBtn">Save Notes</button>
+                    <button type="button" class="action-btn bg-red-500" id="deleteFormBtn">Delete Form</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="historyModal" class="modal">
+            <div class="modal-content">
+                <span class="close-button" onclick="closeModal('historyModal')">&times;</span>
+                <h2>User Login History for <span id="historyUsername"></span></h2>
+                <div id="historyContent" class="mt-4 space-y-3">
+                    </div>
+            </div>
+        </div>
+
+        <div id="accountsModal" class="modal">
+            <div class="modal-content">
+                <span class="close-button" onclick="closeModal('accountsModal')">&times;</span>
+                <h2>Firebase Accounts Overview</h2>
+                <div id="accountsList" class="mt-4 text-sm max-h-96 overflow-y-auto">
+                    </div>
+                <p class="text-xs text-gray-500 mt-4">Note: This modal is for development/testing purposes only.</p>
+            </div>
+        </div>
+
+    </div>
+
+    <script type="module">
+        // Firebase SDK imports
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import {
+            getAuth,
+            onAuthStateChanged,
+            signOut
+        } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+        import {
+            getFirestore,
+            collection,
+            query,
+            where,
+            getDocs,
+            doc,
+            getDoc,
+            setDoc,
+            updateDoc,
+            deleteDoc,
+            addDoc,
+            serverTimestamp,
+            onSnapshot,
+            orderBy,
+            limit
+        } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+        // Firebase configuration (replace with your actual config)
+        const firebaseConfig = {
+            apiKey: "AIzaSyCYF8V_BDf34UjEYAyDLLFs9cgb7IEjO7I", // Replace with your Firebase API Key
+            authDomain: "taskmanager-b93e4.firebaseapp.com",
+            projectId: "taskmanager-b93e4",
+            storageBucket: "taskmanager-b93e4.firebasestorage.app",
+            messagingSenderId: "613129920368",
+            appId: "1:613129920368:web:6077e6ae85031c29f4b9b5",
+            measurementId: "G-W5C4YSJSDZ"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // --- DOM Elements ---
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('mainContent');
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const currentDateDisplay = document.getElementById('currentDateDisplay');
+        const logoutBtn = document.getElementById('logoutBtn');
+
+        const adminUsernameDisplay = document.getElementById('adminUsernameDisplay');
+        const adminEmailDisplay = document.getElementById('adminEmailDisplay');
+
+        const totalUsersCount = document.getElementById('totalUsersCount');
+        const activeUsersCount = document.getElementById('activeUsersCount');
+        const newUsersTodayCount = document.getElementById('newUsersTodayCount');
+        const pendingFormsCount = document.getElementById('pendingFormsCount');
+
+        const sidebarLinks = document.querySelectorAll('.sidebar ul li a');
+        const sections = document.querySelectorAll('section');
+
+        // User Management
+        const usersTable = document.getElementById('usersTable');
+        const searchInput = document.getElementById('searchInput');
+        const statusFilter = document.getElementById('statusFilter');
+        const roleFilter = document.getElementById('roleFilter');
+        const noUsersMessage = document.getElementById('noUsersMessage');
+
+        // Task Management (New Editable Table)
+        const editableTasksTableBody = document.getElementById('editableTasksTable');
+        const taskSearchInput = document.getElementById('taskSearchInput');
+        const taskStatusFilter = document.getElementById('taskStatusFilter');
+        const addNewTaskBtn = document.getElementById('addNewTaskBtn');
+        const noTasksMessage = document.getElementById('noTasksMessage');
+
+        // Forms Submissions
+        const formsTable = document.getElementById('formsTable');
+        const formSearchInput = document.getElementById('formSearchInput');
+        const formStatusFilter = document.getElementById('formStatusFilter');
+        const noFormsMessage = document.getElementById('noFormsMessage');
+
+        // Admin Chat
+        const chatMessages = document.getElementById('chatMessages');
+        const messageInput = document.getElementById('messageInput');
+        const sendMessageBtn = document.getElementById('sendMessageBtn');
+
+        // Activity Logs
+        const logEntries = document.getElementById('logEntries');
+        const noLogsMessage = document.getElementById('noLogsMessage');
+
+        // Modals
+        const assignTaskModal = document.getElementById('assignTaskModal');
+        const viewFormModal = document.getElementById('viewFormModal');
+        const historyModal = document.getElementById('historyModal');
+        const accountsModal = document.getElementById('accountsModal'); // For dev/test
+        const accountsList = document.getElementById('accountsList'); // For dev/test
+
+        // Assign Task Modal Elements
+        const userSelect = document.getElementById('userSelect');
+        const taskUserNameSpan = document.getElementById('taskUserNameSpan');
+        const assignTaskForm = document.getElementById('assignTaskForm');
+        const taskTitleInput = document.getElementById('taskTitleInput');
+        const taskDescriptionTextarea = document.getElementById('taskDescriptionTextarea');
+        const taskPointsAdminInput = document.getElementById('taskPointsAdminInput');
+        const taskDueDateInput = document.getElementById('taskDueDateInput');
+        const taskDueTimeInput = document.getElementById('taskDueTimeInput');
+        const taskLockedCheckbox = document.getElementById('taskLockedCheckbox');
+        const lockTimeGroup = document.getElementById('lockTimeGroup');
+        const lockUntilTimeInput = document.getElementById('lockUntilTimeInput');
+        const assignTaskMessage = document.getElementById('assignTaskMessage');
+        const assignTaskBtn = document.getElementById('assignTaskBtn');
+        const assignTaskModalTitle = document.getElementById('assignTaskModalTitle');
+
+        // View Form Modal Elements
+        let currentFormId = null; // To store the ID of the form being viewed/edited
+        const viewFormAssignedTo = document.getElementById('viewFormAssignedTo');
+        const viewFormTitle = document.getElementById('viewFormTitle');
+        const viewFormDescription = document.getElementById('viewFormDescription');
+        const viewFormPoints = document.getElementById('viewFormPoints');
+        const viewFormDueDate = document.getElementById('viewFormDueDate');
+        const viewFormStatus = document.getElementById('viewFormStatus');
+        const viewFormCreatedBy = document.getElementById('viewFormCreatedBy');
+        const viewFormCreatedOn = document.getElementById('viewFormCreatedOn');
+        const viewFormCompletedAtGroup = document.getElementById('viewFormCompletedAtGroup');
+        const viewFormCompletedAt = document.getElementById('viewFormCompletedAt');
+        const formAdminNotes = document.getElementById('formAdminNotes');
+        const updateFormStatusBtn = document.getElementById('updateFormStatusBtn');
+        const saveAdminNotesBtn = document.getElementById('saveAdminNotesBtn');
+        const deleteFormBtn = document.getElementById('deleteFormBtn');
+
+        // History Modal Elements
+        const historyUsername = document.getElementById('historyUsername');
+        const historyContent = document.getElementById('historyContent');
+
+        // --- Global Variables ---
+        let allUsers = []; // Stores user data for display and lookups
+        let allForms = []; // Stores form data
+        let allLogs = []; // Stores log data
+        let unsubscribeUsers = null;
+        let unsubscribeForms = null;
+        let unsubscribeChat = null;
+        let unsubscribeLogs = null;
+
+        // --- Custom Alert/Toast ---
+        const customAlert = document.getElementById('customAlert');
+        let alertTimeout;
+
+        function showCustomAlert(title, message, type = 'info', duration = 3000) {
+            clearTimeout(alertTimeout); // Clear any existing timeout
+            customAlert.className = `fixed top-20 right-20 bg-white p-4 rounded-lg shadow-lg flex items-center gap-2 transform transition-all duration-300 z-[10000] show ${type}`;
+            customAlert.querySelector('.alert-icon').innerHTML = getAlertIcon(type);
+            customAlert.querySelector('.alert-title').textContent = title;
+            customAlert.querySelector('.alert-message').textContent = message;
+
+            alertTimeout = setTimeout(() => {
+                customAlert.classList.remove('show');
+            }, duration);
+        }
+
+        function getAlertIcon(type) {
+            switch (type) {
+                case 'success': return '<i class="fas fa-check-circle text-green-500"></i>';
+                case 'error': return '<i class="fas fa-times-circle text-red-500"></i>';
+                case 'warning': return '<i class="fas fa-exclamation-triangle text-yellow-500"></i>';
+                case 'info': return '<i class="fas fa-info-circle text-blue-500"></i>';
+                default: return '';
+            }
+        }
+
+        // --- Loading Overlay ---
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        function showLoading(show) {
+            if (show) {
+                loadingOverlay.classList.add('show');
+            } else {
+                loadingOverlay.classList.remove('show');
+            }
+        }
+
+        // --- Core App Initialization ---
+        function initAdminPanel() {
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    // Check if the user has admin role
+                    const userDoc = await getDoc(doc(db, 'users', user.uid));
+                    if (userDoc.exists() && userDoc.data().role === 'admin') {
+                        console.log("Admin signed in:", user.email);
+                        adminUsernameDisplay.textContent = userDoc.data().username || user.email.split('@')[0];
+                        adminEmailDisplay.textContent = user.email;
+
+                        // Start real-time listeners
+                        listenForUsers();
+                        listenForForms(); // Now loads tasks for editable table
+                        listenForChatMessages();
+                        listenForLogs();
+
+                        // Populate user select in assign task modal
+                        await populateUserSelect();
+
+                        // Set up initial section display
+                        showSection('dashboard');
+
+                        // Show sidebar and expand main content
+                        sidebar.classList.remove('hidden');
+                        mainContent.classList.remove('expanded');
+
+                    } else {
+                        // Not an admin, redirect to landing page
+                        showCustomAlert("Access Denied", "You do not have administrative privileges.", "error");
+                        await signOut(auth);
+                        window.location.href = 'LandingPage.html';
+                    }
+                } else {
+                    console.log("Admin signed out or not logged in, redirecting to LandingPage.html");
+                    cleanupOnLogout();
+                    window.location.href = 'LandingPage.html'; // Redirect to login page
+                }
+            });
+
+            setupEventListeners();
+            updateCurrentDate();
+        }
+
+        // --- Event Listeners ---
+        function setupEventListeners() {
+            logoutBtn.addEventListener('click', handleLogout);
+            mobileMenuBtn.addEventListener('click', toggleSidebar);
+
+            sidebarLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const sectionId = e.currentTarget.dataset.section;
+                    showSection(sectionId);
+                    // Close sidebar on mobile after selection
+                    if (window.innerWidth <= 768) {
+                        sidebar.classList.add('hidden');
+                        mainContent.classList.remove('shifted');
+                    }
+                });
+            });
+
+            // User Management Filters
+            searchInput.addEventListener('input', renderUsersTable);
+            statusFilter.addEventListener('change', renderUsersTable);
+            roleFilter.addEventListener('change', renderUsersTable);
+
+            // Task Management Filters (New)
+            taskSearchInput.addEventListener('input', renderEditableTasksTable);
+            taskStatusFilter.addEventListener('change', renderEditableTasksTable);
+            addNewTaskBtn.addEventListener('click', () => {
+                assignTaskModal.style.display = 'flex';
+                assignTaskModalTitle.textContent = 'Assign New Task';
+                assignTaskBtn.textContent = 'Assign Task';
+                // Clear form fields
+                assignTaskForm.reset();
+                userSelect.value = '';
+                taskUserNameSpan.textContent = 'No user selected';
+                assignTaskForm.dataset.editingId = ''; // Clear any editing ID
+                lockTimeGroup.style.display = 'none'; // Hide lock time by default for new task
+                assignTaskMessage.textContent = ''; // Clear message
+            });
+
+
+            // Assign Task Form Submission
+            assignTaskForm.addEventListener('submit', handleAssignTask);
+            taskLockedCheckbox.addEventListener('change', (e) => {
+                lockTimeGroup.style.display = e.target.checked ? 'block' : 'none';
+            });
+            userSelect.addEventListener('change', (e) => {
+                const selectedUser = allUsers.find(u => u.id === e.target.value);
+                taskUserNameSpan.textContent = selectedUser ? (selectedUser.username || selectedUser.email) : 'No user selected';
+            });
+
+            // Admin Chat Send Message
+            sendMessageBtn.addEventListener('click', sendChatMessage);
+            messageInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendChatMessage();
+                }
+            });
+
+            // Forms Submissions Filters
+            formSearchInput.addEventListener('input', renderFormsTable);
+            formStatusFilter.addEventListener('change', renderFormsTable);
+
+            // View Form Modal Action Buttons
+            updateFormStatusBtn.addEventListener('click', handleUpdateFormStatus);
+            saveAdminNotesBtn.addEventListener('click', handleSaveAdminNotes);
+            deleteFormBtn.addEventListener('click', handleDeleteForm);
+        }
+
+        // --- Sidebar Toggle ---
+        function toggleSidebar() {
+            sidebar.classList.toggle('hidden');
+            mainContent.classList.toggle('expanded');
+        }
+
+        // --- Section Navigation ---
+        function showSection(sectionId) {
+            sections.forEach(section => {
+                section.style.display = 'none';
+                section.classList.remove('active-section');
+            });
+            const targetSection = document.getElementById(sectionId);
+            if (targetSection) {
+                targetSection.style.display = 'block';
+                targetSection.classList.add('active-section');
+            }
+
+            sidebarLinks.forEach(link => {
+                if (link.dataset.section === sectionId) {
+                    link.classList.add('active');
+                } else {
+                    link.classList.remove('active');
+                }
+            });
+        }
+
+        // --- Dashboard Stats ---
+        async function updateStats() {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0); // Start of today
+
+            let activeUsers = 0;
+            let newUsersToday = 0;
+
+            allUsers.forEach(user => {
+                if (user.isActive) {
+                    activeUsers++;
+                }
+                if (user.createdAt && new Date(user.createdAt.seconds * 1000) >= today) {
+                    newUsersToday++;
+                }
+            });
+
+            const pendingForms = allForms.filter(form => form.status === 'pending').length;
+
+            totalUsersCount.textContent = allUsers.length;
+            activeUsersCount.textContent = activeUsers;
+            newUsersTodayCount.textContent = newUsersToday;
+            pendingFormsCount.textContent = pendingForms;
+        }
+
+        // --- User Management ---
+        async function listenForUsers() {
+            if (unsubscribeUsers) unsubscribeUsers(); // Unsubscribe from previous listener
+
+            const q = query(collection(db, 'users'), orderBy('createdAt', 'desc'));
+
+            unsubscribeUsers = onSnapshot(q, (snapshot) => {
+                allUsers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderUsersTable();
+                updateStats();
+                populateUserSelect(); // Update user list in assign task modal
+            }, (error) => {
+                console.error("Error listening for users:", error);
+                showCustomAlert("Error", "Failed to load users.", "error");
+            });
+        }
+
+        function renderUsersTable() {
+            usersTable.innerHTML = ''; // Clear existing rows
+            const searchTerm = searchInput.value.toLowerCase();
+            const statusFilterValue = statusFilter.value;
+            const roleFilterValue = roleFilter.value;
+
+            let filteredUsers = allUsers.filter(user => {
+                const userName = user.username ? user.username.toLowerCase() : '';
+                const email = user.email ? user.email.toLowerCase() : '';
+                const matchesSearch = userName.includes(searchTerm) || email.includes(searchTerm);
+                const matchesStatus = statusFilterValue === 'all' || (statusFilterValue === 'active' && user.isActive) || (statusFilterValue === 'inactive' && !user.isActive);
+                const matchesRole = roleFilterValue === 'all' || user.role === roleFilterValue;
+                return matchesSearch && matchesStatus && matchesRole;
+            });
+
+            if (filteredUsers.length === 0) {
+                noUsersMessage.style.display = 'block';
+                return;
+            } else {
+                noUsersMessage.style.display = 'none';
+            }
+
+            filteredUsers.forEach(user => {
+                const row = usersTable.insertRow();
+                const lastLogin = user.lastLogin ? new Date(user.lastLogin.seconds * 1000).toLocaleString() : 'N/A';
+                row.innerHTML = `
+                    <td class="py-3 px-6" data-label="Username">${user.username || 'N/A'}</td>
+                    <td class="py-3 px-6" data-label="Email">${user.email}</td>
+                    <td class="py-3 px-6" data-label="Role">
+                        <select class="user-role-select bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-color focus:border-primary-color p-2.5" data-user-id="${user.id}">
+                            <option value="user" ${user.role === 'user' ? 'selected' : ''}>User</option>
+                            <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Admin</option>
+                        </select>
+                    </td>
+                    <td class="py-3 px-6" data-label="Status">
+                        <span class="px-2 py-1 rounded-full text-xs font-medium ${user.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                            ${user.isActive ? 'Active' : 'Inactive'}
+                        </span>
+                    </td>
+                    <td class="py-3 px-6" data-label="Last Login">${lastLogin}</td>
+                    <td class="py-3 px-6 text-center">
+                        <div class="flex item-center justify-center space-x-2">
+                            <button onclick="toggleUserStatus('${user.id}', ${user.isActive})" class="action-btn ${user.isActive ? 'red' : 'green'} text-xs">
+                                ${user.isActive ? 'Deactivate' : 'Activate'}
+                            </button>
+                            <button onclick="viewUserHistory('${user.id}', '${user.username || user.email}')" class="action-btn blue text-xs">
+                                History
+                            </button>
+                            <button onclick="deleteUser('${user.id}', '${user.email}')" class="action-btn red text-xs">
+                                Delete
+                            </button>
+                        </div>
+                    </td>
+                `;
+
+                // Add event listener for role change
+                row.querySelector('.user-role-select').addEventListener('change', async (e) => {
+                    const userId = e.target.dataset.userId;
+                    const newRole = e.target.value;
+                    await changeUserRole(userId, newRole);
+                });
+            });
+        }
+
+        async function toggleUserStatus(userId, currentStatus) {
+            showLoading(true);
+            try {
+                const userRef = doc(db, 'users', userId);
+                await updateDoc(userRef, { isActive: !currentStatus });
+                showCustomAlert("Success", `User status updated to ${!currentStatus ? 'Active' : 'Inactive'}!`, "success");
+            } catch (error) {
+                console.error("Error toggling user status:", error);
+                showCustomAlert("Error", `Failed to update user status: ${error.message}`, "error");
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function changeUserRole(userId, newRole) {
+            if (userId === auth.currentUser.uid && newRole !== 'admin') {
+                showCustomAlert("Error", "You cannot demote yourself from admin role.", "error");
+                return;
+            }
+            showLoading(true);
+            try {
+                const userRef = doc(db, 'users', userId);
+                await updateDoc(userRef, { role: newRole });
+                showCustomAlert("Success", `User role updated to ${newRole}!`, "success");
+            } catch (error) {
+                console.error("Error changing user role:", error);
+                showCustomAlert("Error", `Failed to change user role: ${error.message}`, "error");
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function deleteUser(userId, userEmail) {
+            if (!confirm(`Are you sure you want to delete user ${userEmail}? This action is irreversible.`)) {
+                return;
+            }
+            if (userId === auth.currentUser.uid) {
+                showCustomAlert("Error", "You cannot delete your own admin account.", "error");
+                return;
+            }
+            showLoading(true);
+            try {
+                // Delete user document from Firestore
+                await deleteDoc(doc(db, 'users', userId));
+                // You might also need to delete the user from Firebase Authentication,
+                // but this requires server-side logic (Cloud Functions) as it's not allowed from client-side for security.
+                showCustomAlert("Success", `User ${userEmail} deleted successfully!`, "success");
+
+                // Log the action
+                await addDoc(collection(db, 'logs'), {
+                    type: 'admin',
+                    action: `Deleted user ${userEmail} (ID: ${userId})`,
+                    userId: auth.currentUser ? auth.currentUser.uid : 'unknown_admin',
+                    userEmail: auth.currentUser ? auth.currentUser.email : 'unknown_admin@example.com',
+                    targetUserId: userId,
+                    timestamp: serverTimestamp()
+                });
+
+            } catch (error) {
+                console.error("Error deleting user:", error);
+                showCustomAlert("Error", `Failed to delete user: ${error.message}. Also ensure you delete their forms manually.`, "error");
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function viewUserHistory(userId, username) {
+            historyUsername.textContent = username;
+            historyContent.innerHTML = '<p class="text-center text-gray-500">Loading history...</p>';
+            historyModal.style.display = 'flex';
+
+            try {
+                const q = query(
+                    collection(db, 'loginSessions'),
+                    where('userId', '==', userId),
+                    orderBy('startTime', 'desc'),
+                    limit(50) // Limit to last 50 sessions
+                );
+                const snapshot = await getDocs(q);
+
+                if (snapshot.empty) {
+                    historyContent.innerHTML = '<p class="text-center text-gray-500">No login history found for this user.</p>';
+                    return;
+                }
+
+                historyContent.innerHTML = ''; // Clear loading message
+
+                snapshot.forEach(doc => {
+                    const session = doc.data();
+                    const startTime = session.startTime ? new Date(session.startTime.seconds * 1000).toLocaleString() : 'N/A';
+                    const endTime = session.endTime ? new Date(session.endTime.seconds * 1000).toLocaleString() : 'Currently Active';
+                    const durationMs = session.endTime && session.startTime ? (session.endTime.seconds - session.startTime.seconds) * 1000 : null;
+                    const duration = durationMs ? formatDuration(durationMs) : 'N/A';
+
+                    const sessionDiv = document.createElement('div');
+                    sessionDiv.className = 'bg-gray-50 p-3 rounded-md shadow-sm border border-gray-200';
+                    sessionDiv.innerHTML = `
+                        <p class="font-semibold text-gray-800">Login: ${startTime}</p>
+                        <p class="text-gray-600">Logout: ${endTime}</p>
+                        ${duration !== 'N/A' ? `<p class="text-gray-600">Duration: ${duration}</p>` : ''}
+                    `;
+                    historyContent.appendChild(sessionDiv);
+                });
+
+            } catch (error) {
+                console.error("Error fetching user history:", error);
+                historyContent.innerHTML = `<p class="text-red-500 text-center">Error loading history: ${error.message}</p>`;
+            }
+        }
+
+        function formatDuration(milliseconds) {
+            const seconds = Math.floor(milliseconds / 1000);
+            const minutes = Math.floor(seconds / 60);
+            const hours = Math.floor(minutes / 60);
+            const days = Math.floor(hours / 24);
+
+            let result = [];
+            if (days > 0) result.push(`${days}d`);
+            if (hours % 24 > 0) result.push(`${hours % 24}h`);
+            if (minutes % 60 > 0) result.push(`${minutes % 60}m`);
+            if (seconds % 60 > 0 && result.length < 2) result.push(`${seconds % 60}s`);
+
+            return result.length > 0 ? result.join(' ') : '0s';
+        }
+
+        // --- Task Management (Editable Table Logic) ---
+        let allUsersCache = {}; // Cache for user data: {uid: {username, email}}
+
+        // Function to fetch all users (for displaying usernames)
+        async function fetchAllUsersForTasks() {
+            try {
+                const usersSnapshot = await getDocs(collection(db, 'users'));
+                allUsersCache = {}; // Clear previous cache
+                usersSnapshot.forEach(doc => {
+                    const userData = doc.data();
+                    allUsersCache[doc.id] = {
+                        username: userData.username || userData.email.split('@')[0],
+                        email: userData.email
+                    };
+                });
+                console.log("Users fetched and cached for task display:", allUsersCache);
+            } catch (error) {
+                console.error("Error fetching all users for tasks:", error);
+                showCustomAlert("Error", "Failed to load user list for tasks.", "error");
+            }
+        }
+
+        // Function to get username from UID (cached)
+        function getUserNameById(uid) {
+            return allUsersCache[uid] ? allUsersCache[uid].username : 'Unknown User';
+        }
+
+        // Modified listenForForms to trigger renderEditableTasksTable
+        async function listenForForms() {
+            if (unsubscribeForms) unsubscribeForms();
+            console.log("Setting up forms listener...");
+
+            await fetchAllUsersForTasks(); // Ensure users are fetched before tasks
+
+            const q = query(
+                collection(db, 'forms'),
+                orderBy('createdAt', 'desc')
+            );
+
+            unsubscribeForms = onSnapshot(q, (snapshot) => {
+                allForms = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                console.log("Forms data received:", allForms);
+                renderEditableTasksTable(); // Call the new render function for tasks
+                renderFormsTable(); // Also render the forms submission table
+                updateStats();
+            }, (error) => {
+                console.error("Error listening for forms:", error);
+                showCustomAlert("Error", `Error loading tasks: ${error.message}`, "error");
+            });
+        }
+
+        function renderEditableTasksTable() {
+            editableTasksTableBody.innerHTML = ''; // Clear existing rows
+            const searchTerm = taskSearchInput.value.toLowerCase();
+            const statusFilter = taskStatusFilter.value;
+
+            let filteredTasks = allForms.filter(task => {
+                const userName = getUserNameById(task.assignedTo).toLowerCase();
+                const taskName = task.title ? task.title.toLowerCase() : '';
+                const matchesSearch = userName.includes(searchTerm) || taskName.includes(searchTerm);
+                let matchesStatus = false;
+                if (statusFilter === 'all') {
+                    matchesStatus = true;
+                } else if (statusFilter === 'active' && task.status === 'active') {
+                    matchesStatus = true;
+                } else if (statusFilter === 'pending' && task.status === 'pending') {
+                    matchesStatus = true;
+                } else if (statusFilter === 'completed' && task.status === 'completed') {
+                    matchesStatus = true;
+                }
+                return matchesSearch && matchesStatus;
+            });
+
+            if (filteredTasks.length === 0) {
+                noTasksMessage.style.display = 'block';
+                return;
+            } else {
+                noTasksMessage.style.display = 'none';
+            }
+
+            filteredTasks.forEach(task => {
+                const row = editableTasksTableBody.insertRow();
+                row.dataset.taskId = task.id;
+
+                const dueDateObj = task.dueDate ? new Date(task.dueDate.seconds * 1000) : null;
+                const formattedDate = dueDateObj ? dueDateObj.toISOString().split('T')[0] : '';
+                const formattedTime = dueDateObj ? dueDateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : '';
+
+                let displayStatusOption = task.status;
+                if (task.status === 'active') {
+                    displayStatusOption = 'active'; // Keep 'active' for value, but display 'In Progress'
+                }
+
+                row.innerHTML = `
+                    <td class="py-3 px-6 whitespace-nowrap" data-label="User">
+                        <span class="font-medium">${getUserNameById(task.assignedTo)}</span>
+                    </td>
+                    <td class="py-3 px-6" data-label="Task Name">
+                        <input type="text" value="${task.title || ''}" class="task-input px-2 py-1 border rounded-md w-full" data-field="title">
+                    </td>
+                    <td class="py-3 px-6" data-label="Due Date">
+                        <input type="date" value="${formattedDate}" class="task-input px-2 py-1 border rounded-md w-full" data-field="dueDate">
+                    </td>
+                    <td class="py-3 px-6" data-label="Due Time">
+                        <input type="time" value="${formattedTime}" class="task-input px-2 py-1 border rounded-md w-full" data-field="dueTime">
+                    </td>
+                    <td class="py-3 px-6" data-label="Status">
+                        <select class="task-input px-2 py-1 border rounded-md w-full" data-field="status">
+                            <option value="pending" ${task.status === 'pending' ? 'selected' : ''}>Pending</option>
+                            <option value="active" ${task.status === 'active' ? 'selected' : ''}>In Progress</option>
+                            <option value="completed" ${task.status === 'completed' ? 'selected' : ''}>Completed</option>
+                        </select>
+                    </td>
+                    <td class="py-3 px-6 text-center" data-label="Actions">
+                        <button class="save-task-btn action-btn green px-3 py-1 rounded-md text-xs mr-2">Save</button>
+                        <button class="delete-task-btn action-btn red px-3 py-1 rounded-md text-xs">Delete</button>
+                    </td>
+                `;
+
+                row.querySelector('.save-task-btn').addEventListener('click', () => saveTaskChanges(task.id, row));
+                row.querySelector('.delete-task-btn').addEventListener('click', () => deleteTaskFromTable(task.id));
+            });
+        }
+
+
+        async function saveTaskChanges(taskId, rowElement) {
+            showLoading(true);
+            try {
+                const updatedData = {};
+                let newDueDateStr = '';
+                let newDueTimeStr = '';
+
+                rowElement.querySelectorAll('.task-input').forEach(input => {
+                    const field = input.dataset.field;
+                    if (field === 'dueDate') {
+                        newDueDateStr = input.value;
+                    } else if (field === 'dueTime') {
+                        newDueTimeStr = input.value;
+                    } else {
+                        updatedData[field] = input.value;
+                    }
+                });
+
+                // Combine date and time for dueDate
+                if (newDueDateStr) {
+                    let combinedDateTimeString = newDueDateStr;
+                    if (newDueTimeStr) {
+                        combinedDateTimeString += `T${newDueTimeStr}`;
+                    } else {
+                        combinedDateTimeString += `T00:00`; // Default time if only date is provided
+                    }
+                    updatedData.dueDate = new Date(combinedDateTimeString);
+                } else {
+                    updatedData.dueDate = null; // Set to null if date is empty
+                }
+
+                // Handle completedAt timestamp
+                const currentTaskStatus = allForms.find(t => t.id === taskId)?.status;
+                if (updatedData.status === 'completed' && currentTaskStatus !== 'completed') {
+                    updatedData.completedAt = serverTimestamp();
+                } else if (updatedData.status !== 'completed' && currentTaskStatus === 'completed') {
+                    // If status changes from completed to non-completed, remove completedAt
+                    // Firebase `deleteField` is not directly exposed as a value here.
+                    // Setting to null or an empty string might be database-dependent.
+                    // For typical Firestore, setting to null works for removal, or you could read the doc first and explicitly remove it.
+                    // For simplicity, setting to null will clear it.
+                    updatedData.completedAt = null;
+                }
+
+                const taskRef = doc(db, 'forms', taskId);
+                await updateDoc(taskRef, updatedData);
+
+                await addDoc(collection(db, 'logs'), {
+                    type: 'admin',
+                    action: `Updated task "${updatedData.title || ''}" (ID: ${taskId})`,
+                    userId: auth.currentUser ? auth.currentUser.uid : 'unknown_admin',
+                    userEmail: auth.currentUser ? auth.currentUser.email : 'unknown_admin@example.com',
+                    targetTaskID: taskId,
+                    note: JSON.stringify(updatedData),
+                    timestamp: serverTimestamp()
+                });
+
+                showCustomAlert("Success", "Task updated successfully!", "success");
+            } catch (error) {
+                console.error("Error updating task:", error);
+                showCustomAlert("Error", `Failed to update task: ${error.message}`, "error");
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function deleteTaskFromTable(taskId) {
+            if (!confirm("Are you sure you want to delete this task? This cannot be undone.")) {
+                return;
+            }
+            showLoading(true);
+            try {
+                await deleteDoc(doc(db, 'forms', taskId));
+
+                await addDoc(collection(db, 'logs'), {
+                    type: 'admin',
+                    action: `Deleted task (ID: ${taskId})`,
+                    userId: auth.currentUser ? auth.currentUser.uid : 'unknown_admin',
+                    userEmail: auth.currentUser ? auth.currentUser.email : 'unknown_admin@example.com',
+                    targetTaskID: taskId,
+                    timestamp: serverTimestamp()
+                });
+
+                showCustomAlert("Success", "Task deleted successfully!", "success");
+            } catch (error) {
+                console.error("Error deleting task:", error);
+                showCustomAlert("Error", `Failed to delete task: ${error.message}`, "error");
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // --- Assign Task Logic (Reused for 'Add New Task') ---
+        async function populateUserSelect() {
+            userSelect.innerHTML = '<option value="">Select User</option>'; // Default option
+            allUsers.forEach(user => {
+                const option = document.createElement('option');
+                option.value = user.id;
+                option.textContent = user.username || user.email;
+                userSelect.appendChild(option);
+            });
+        }
+
+        async function handleAssignTask(event) {
+            event.preventDefault();
+            showLoading(true);
+            assignTaskMessage.textContent = ''; // Clear previous messages
+
+            const currentUserId = userSelect.value;
+            const title = taskTitleInput.value.trim();
+            const description = taskDescriptionTextarea.value.trim();
+            const points = parseInt(taskPointsAdminInput.value);
+            const dueDateString = taskDueDateInput.value;
+            const dueTimeString = taskDueTimeInput.value;
+            const isLocked = taskLockedCheckbox.checked;
+            const lockUntilTimeString = lockUntilTimeInput.value;
+
+            if (!currentUserId) {
+                assignTaskMessage.textContent = 'Please select a user.';
+                showLoading(false);
+                return;
+            }
+            if (!title || !dueDateString || isNaN(points)) {
+                assignTaskMessage.textContent = 'Task title, due date, and points are required.';
+                showLoading(false);
+                return;
+            }
+
+            let combinedDueDate = new Date(dueDateString);
+            if (dueTimeString) {
+                const [hours, minutes] = dueTimeString.split(':').map(Number);
+                combinedDueDate.setHours(hours, minutes, 0, 0);
+            } else {
+                combinedDueDate.setHours(23, 59, 59, 999); // Default to end of day if no time
+            }
+
+            let lockUntil = null;
+            if (isLocked && lockUntilTimeString) {
+                lockUntil = new Date(dueDateString);
+                const [lockHours, lockMinutes] = lockUntilTimeString.split(':').map(Number);
+                lockUntil.setHours(lockHours, lockMinutes, 0, 0);
+            } else if (isLocked && !lockUntilTimeString) {
+                lockUntil = new Date(dueDateString);
+                lockUntil.setHours(23, 59, 59, 999); // Default to end of day if locked but no time specified
+            }
+
+            try {
+                // If editing an existing task
+                const editingId = assignTaskForm.dataset.editingId;
+                if (editingId) {
+                    const taskRef = doc(db, 'forms', editingId);
+                    await updateDoc(taskRef, {
+                        assignedTo: currentUserId,
+                        title,
+                        description,
+                        points,
+                        dueDate: combinedDueDate,
+                        isLocked,
+                        lockUntil: lockUntil,
+                        // status and createdBy/createdAt are usually not changed during edit
+                    });
+
+                    await addDoc(collection(db, 'logs'), {
+                        type: 'admin',
+                        action: `Edited task "${title}" (ID: ${editingId}) assigned to ${getUserNameById(currentUserId)}`,
+                        userId: auth.currentUser ? auth.currentUser.uid : 'unknown_admin',
+                        userEmail: auth.currentUser ? auth.currentUser.email : 'unknown_admin@example.com',
+                        targetUserId: currentUserId,
+                        targetTaskID: editingId,
+                        timestamp: serverTimestamp()
+                    });
+                    showCustomAlert("Success", "Task updated successfully!", "success");
+
+                } else {
+                    // Otherwise, add a new task
+                    await addDoc(collection(db, 'forms'), {
+                        assignedTo: currentUserId,
+                        title,
+                        description,
+                        points,
+                        dueDate: combinedDueDate,
+                        status: 'pending',
+                        createdAt: serverTimestamp(),
+                        createdBy: auth.currentUser.uid,
+                        createdByEmail: auth.currentUser.email,
+                        isLocked,
+                        lockUntil: isLocked ? lockUntil : null
+                    });
+
+                    await addDoc(collection(db, 'logs'), {
+                        type: 'admin',
+                        action: `Assigned new task "${title}" to user ${getUserNameById(currentUserId)}`,
+                        userId: auth.currentUser ? auth.currentUser.uid : 'unknown_admin',
+                        userEmail: auth.currentUser ? auth.currentUser.email : 'unknown_admin@example.com',
+                        targetUserId: currentUserId,
+                        note: `Task: ${title}, Due: ${combinedDueDate.toLocaleString()}, Points: ${points}`,
+                        timestamp: serverTimestamp()
+                    });
+                    showCustomAlert("Success", "Task assigned successfully!", "success");
+                }
+
+                // Close modal and clear form
+                closeModal('assignTaskModal');
+                assignTaskForm.reset();
+                userSelect.value = '';
+                taskUserNameSpan.textContent = 'No user selected';
+            } catch (error) {
+                console.error("Error assigning/updating task:", error);
+                assignTaskMessage.textContent = `Error: ${error.message}`;
+                showCustomAlert("Error", `Error assigning/updating task: ${error.message}`, "error");
+            } finally {
+                showLoading(false);
+            }
+        }
+
+
+        // --- Forms Submissions Management ---
+        function renderFormsTable() {
+            formsTable.innerHTML = '';
+            const searchTerm = formSearchInput.value.toLowerCase();
+            const statusFilter = formStatusFilter.value;
+
+            let filteredForms = allForms.filter(form => {
+                const userName = getUserNameById(form.assignedTo).toLowerCase();
+                const title = form.title ? form.title.toLowerCase() : '';
+                const description = form.description ? form.description.toLowerCase() : '';
+                const matchesSearch = userName.includes(searchTerm) || title.includes(searchTerm) || description.includes(searchTerm);
+                const matchesStatus = statusFilter === 'all' || form.status === statusFilter;
+                return matchesSearch && matchesStatus;
+            });
+
+            if (filteredForms.length === 0) {
+                noFormsMessage.style.display = 'block';
+                return;
+            } else {
+                noFormsMessage.style.display = 'none';
+            }
+
+            filteredForms.forEach(form => {
+                const row = formsTable.insertRow();
+                const dueDate = form.dueDate ? new Date(form.dueDate.seconds * 1000).toLocaleString() : 'N/A';
+                const createdOn = form.createdAt ? new Date(form.createdAt.seconds * 1000).toLocaleString() : 'N/A';
+                row.innerHTML = `
+                    <td class="py-3 px-6" data-label="User">${getUserNameById(form.assignedTo)}</td>
+                    <td class="py-3 px-6" data-label="Title">${form.title}</td>
+                    <td class="py-3 px-6" data-label="Description">${form.description.substring(0, 50)}${form.description.length > 50 ? '...' : ''}</td>
+                    <td class="py-3 px-6" data-label="Points">${form.points || 'N/A'}</td>
+                    <td class="py-3 px-6" data-label="Due Date">${dueDate}</td>
+                    <td class="py-3 px-6" data-label="Status">
+                        <span class="px-2 py-1 rounded-full text-xs font-medium ${form.status === 'completed' ? 'bg-green-100 text-green-800' : form.status === 'active' ? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800'}">
+                            ${form.status.charAt(0).toUpperCase() + form.status.slice(1)}
+                        </span>
+                    </td>
+                    <td class="py-3 px-6" data-label="Created On">${createdOn}</td>
+                    <td class="py-3 px-6 text-center">
+                        <div class="flex item-center justify-center space-x-2">
+                            <button onclick="viewFormDetails('${form.id}')" class="action-btn orange text-xs">View/Edit</button>
+                            <button onclick="deleteForm('${form.id}')" class="action-btn red text-xs">Delete</button>
+                        </div>
+                    </td>
+                `;
+            });
+        }
+
+        async function viewFormDetails(formId) {
+            currentFormId = formId; // Store the current form ID
+            const formDoc = await getDoc(doc(db, 'forms', formId));
+            if (!formDoc.exists()) {
+                showCustomAlert("Error", "Form not found!", "error");
+                return;
+            }
+            const form = formDoc.data();
+
+            viewFormAssignedTo.textContent = getUserNameById(form.assignedTo);
+            viewFormTitle.textContent = form.title;
+            viewFormDescription.textContent = form.description;
+            viewFormPoints.textContent = form.points || 'N/A';
+            viewFormDueDate.textContent = form.dueDate ? new Date(form.dueDate.seconds * 1000).toLocaleString() : 'N/A';
+            viewFormStatus.textContent = form.status.charAt(0).toUpperCase() + form.status.slice(1);
+            viewFormCreatedBy.textContent = form.createdByEmail || form.createdBy || 'N/A';
+            viewFormCreatedOn.textContent = form.createdAt ? new Date(form.createdAt.seconds * 1000).toLocaleString() : 'N/A';
+            formAdminNotes.value = form.adminNotes || '';
+
+            if (form.status === 'completed' && form.completedAt) {
+                viewFormCompletedAtGroup.style.display = 'block';
+                viewFormCompletedAt.textContent = new Date(form.completedAt.seconds * 1000).toLocaleString();
+            } else {
+                viewFormCompletedAtGroup.style.display = 'none';
+                viewFormCompletedAt.textContent = '';
+            }
+
+            // Set up update status button based on current status
+            if (form.status === 'pending') {
+                updateFormStatusBtn.textContent = 'Mark Active';
+                updateFormStatusBtn.onclick = () => handleUpdateFormStatus('active');
+                updateFormStatusBtn.style.display = 'inline-block';
+                updateFormStatusBtn.className = 'action-btn bg-primary-color';
+            } else if (form.status === 'active') {
+                updateFormStatusBtn.textContent = 'Mark Complete';
+                updateFormStatusBtn.onclick = () => handleUpdateFormStatus('completed');
+                updateFormStatusBtn.style.display = 'inline-block';
+                updateFormStatusBtn.className = 'action-btn bg-secondary-color';
+            } else {
+                updateFormStatusBtn.style.display = 'none'; // No further status change for completed
+            }
+
+            viewFormModal.style.display = 'flex';
+        }
+
+        async function handleUpdateFormStatus(newStatus) {
+            if (!currentFormId) return;
+            showLoading(true);
+            try {
+                const formRef = doc(db, 'forms', currentFormId);
+                const updateData = { status: newStatus };
+                if (newStatus === 'completed') {
+                    updateData.completedAt = serverTimestamp();
+                } else if (newStatus !== 'completed' && viewFormCompletedAtGroup.style.display === 'block') {
+                    updateData.completedAt = null; // Clear completedAt if changing from completed
+                }
+
+                await updateDoc(formRef, updateData);
+
+                await addDoc(collection(db, 'logs'), {
+                    type: 'admin',
+                    action: `Updated form status (ID: ${currentFormId}) to ${newStatus}`,
+                    userId: auth.currentUser ? auth.currentUser.uid : 'unknown_admin',
+                    userEmail: auth.currentUser ? auth.currentUser.email : 'unknown_admin@example.com',
+                    targetFormID: currentFormId,
+                    note: `New status: ${newStatus}`,
+                    timestamp: serverTimestamp()
+                });
+
+                showCustomAlert("Success", `Form status updated to ${newStatus}!`, "success");
+                closeModal('viewFormModal');
+            } catch (error) {
+                console.error("Error updating form status:", error);
+                showCustomAlert("Error", `Failed to update form status: ${error.message}`, "error");
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function handleSaveAdminNotes() {
+            if (!currentFormId) return;
+            showLoading(true);
+            try {
+                const formRef = doc(db, 'forms', currentFormId);
+                const notes = formAdminNotes.value.trim();
+                await updateDoc(formRef, { adminNotes: notes });
+
+                await addDoc(collection(db, 'logs'), {
+                    type: 'admin',
+                    action: `Updated admin notes for form (ID: ${currentFormId})`,
+                    userId: auth.currentUser ? auth.currentUser.uid : 'unknown_admin',
+                    userEmail: auth.currentUser ? auth.currentUser.email : 'unknown_admin@example.com',
+                    targetFormID: currentFormId,
+                    note: `New notes: ${notes.substring(0, 100)}...`,
+                    timestamp: serverTimestamp()
+                });
+
+                showCustomAlert("Success", "Admin notes saved!", "success");
+                closeModal('viewFormModal');
+            } catch (error) {
+                console.error("Error saving admin notes:", error);
+                showCustomAlert("Error", `Failed to save notes: ${error.message}`, "error");
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function deleteForm(formId) {
+            if (!confirm("Are you sure you want to delete this form submission? This cannot be undone.")) {
+                return;
+            }
+            showLoading(true);
+            try {
+                await deleteDoc(doc(db, 'forms', formId));
+
+                await addDoc(collection(db, 'logs'), {
+                    type: 'admin',
+                    action: `Deleted form (ID: ${formId})`,
+                    userId: auth.currentUser ? auth.currentUser.uid : 'unknown_admin',
+                    userEmail: auth.currentUser ? auth.currentUser.email : 'unknown_admin@example.com',
+                    targetFormID: formId,
+                    timestamp: serverTimestamp()
+                });
+
+                showCustomAlert("Success", "Form deleted successfully!", "success");
+                closeModal('viewFormModal');
+            } catch (error) {
+                console.error("Error deleting form:", error);
+                showCustomAlert("Error", `Failed to delete form: ${error.message}`, "error");
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // --- Admin Chat ---
+        async function listenForChatMessages() {
+            if (unsubscribeChat) unsubscribeChat();
+
+            const q = query(collection(db, 'chatMessages'), orderBy('timestamp', 'asc')); // Order by timestamp ascending
+
+            unsubscribeChat = onSnapshot(q, (snapshot) => {
+                chatMessages.innerHTML = ''; // Clear existing messages
+                snapshot.forEach(doc => {
+                    const msg = doc.data();
+                    const messageDiv = document.createElement('div');
+                    messageDiv.className = `p-2 rounded-lg mb-2 text-sm ${msg.senderId === auth.currentUser.uid ? 'bg-primary-color text-white self-end ml-auto' : 'bg-gray-200 text-gray-800 self-start mr-auto'}`;
+                    messageDiv.style.maxWidth = '80%';
+                    messageDiv.innerHTML = `
+                        <p class="font-bold">${msg.senderName || msg.senderEmail}:</p>
+                        <p>${msg.message}</p>
+                        <span class="block text-right text-xs opacity-75 mt-1">${msg.timestamp ? new Date(msg.timestamp.seconds * 1000).toLocaleString() : 'N/A'}</span>
+                    `;
+                    chatMessages.appendChild(messageDiv);
+                });
+                chatMessages.scrollTop = chatMessages.scrollHeight; // Scroll to bottom
+            }, (error) => {
+                console.error("Error listening for chat messages:", error);
+                showCustomAlert("Error", "Failed to load chat messages.", "error");
+            });
+        }
+
+        async function sendChatMessage() {
+            const messageText = messageInput.value.trim();
+            if (messageText === '') return;
+
+            showLoading(true);
+            try {
+                await addDoc(collection(db, 'chatMessages'), {
+                    message: messageText,
+                    senderId: auth.currentUser.uid,
+                    senderName: adminUsernameDisplay.textContent,
+                    senderEmail: adminEmailDisplay.textContent,
+                    timestamp: serverTimestamp()
+                });
+                messageInput.value = ''; // Clear input
+            } catch (error) {
+                console.error("Error sending message:", error);
+                showCustomAlert("Error", `Failed to send message: ${error.message}`, "error");
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // --- Activity Logs ---
+        async function listenForLogs() {
+            if (unsubscribeLogs) unsubscribeLogs();
+
+            const q = query(collection(db, 'logs'), orderBy('timestamp', 'desc'), limit(100)); // Last 100 logs
+
+            unsubscribeLogs = onSnapshot(q, (snapshot) => {
+                logEntries.innerHTML = '';
+                if (snapshot.empty) {
+                    noLogsMessage.style.display = 'block';
+                } else {
+                    noLogsMessage.style.display = 'none';
+                }
+                snapshot.forEach(doc => {
+                    const log = doc.data();
+                    const logDiv = document.createElement('div');
+                    logDiv.className = 'bg-gray-50 p-3 rounded-md shadow-sm border border-gray-200 text-sm';
+                    logDiv.innerHTML = `
+                        <p class="font-semibold text-gray-800">
+                            <span class="text-xs text-gray-500 mr-2">${log.timestamp ? new Date(log.timestamp.seconds * 1000).toLocaleString() : 'N/A'}</span>
+                            <span class="text-blue-600">${log.action}</span>
+                        </p>
+                        <p class="text-gray-600 ml-5">By: ${log.userEmail || 'Unknown Admin'}</p>
+                        ${log.note ? `<p class="text-gray-500 ml-5 text-xs">Note: ${log.note.substring(0, 200)}...</p>` : ''}
+                    `;
+                    logEntries.appendChild(logDiv);
+                });
+            }, (error) => {
+                console.error("Error listening for logs:", error);
+                showCustomAlert("Error", "Failed to load activity logs.", "error");
+            });
+        }
+
+        // --- Modals General Functionality ---
+        function openModal(modalId) {
+            document.getElementById(modalId).style.display = 'flex';
+        }
+
+        window.closeModal = (modalId) => { // Make available globally for onclick
+            document.getElementById(modalId).style.display = 'none';
+        };
+
+        // Close modals when clicking outside
+        window.addEventListener('click', function(event) {
+            if (event.target === assignTaskModal) closeModal('assignTaskModal');
+            if (event.target === viewFormModal) closeModal('viewFormModal');
+            if (event.target === historyModal) closeModal('historyModal');
+            if (event.target === accountsModal) closeModal('accountsModal');
+        });
+
+        // For dev/test: Show Firebase Account Info
+        window.showAccountsModal = async () => {
+            accountsList.innerHTML = '<p class="text-center text-gray-500">Loading accounts...</p>';
+            openModal('accountsModal');
+            try {
+                // This will only work if you have a Cloud Function to list users,
+                // or if you're using a Firebase Admin SDK in a secure environment.
+                // Client-side Firebase SDK does not allow listing all users for security reasons.
+                accountsList.innerHTML = '<p class="text-red-500">Cannot list all user accounts from client-side for security reasons. Requires Firebase Admin SDK on a server.</p>';
+            } catch (error) {
+                console.error("Error fetching accounts:", error);
+                accountsList.innerHTML = `<p class="text-red-500">Error: ${error.message}</p>`;
+            }
+        };
+
+
+        // --- Logout ---
+        async function handleLogout() {
+            showLoading(true);
+            try {
+                await signOut(auth);
+                console.log("Admin signed out successfully.");
+                // onAuthStateChanged will handle redirection
+            } catch (error) {
+                console.error('Error logging out:', error);
+                showCustomAlert("Error", `Logout failed: ${error.message}`, "error");
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // Clean up listeners on logout to prevent memory leaks
+        function cleanupOnLogout() {
+            if (unsubscribeUsers) unsubscribeUsers();
+            if (unsubscribeForms) unsubscribeForms();
+            if (unsubscribeChat) unsubscribeChat();
+            if (unsubscribeLogs) unsubscribeLogs();
+
+            allUsers = [];
+            allForms = [];
+            allLogs = [];
+
+            // Clear tables
+            usersTable.innerHTML = '';
+            editableTasksTableBody.innerHTML = '';
+            formsTable.innerHTML = '';
+            chatMessages.innerHTML = '';
+            logEntries.innerHTML = '';
+
+            // Reset counts
+            totalUsersCount.textContent = '0';
+            activeUsersCount.textContent = '0';
+            newUsersTodayCount.textContent = '0';
+            pendingFormsCount.textContent = '0';
+
+            sidebar.classList.add('hidden');
+            mainContent.classList.add('expanded');
+        }
+
+        // --- Utility: Update Current Date Display ---
+        function updateCurrentDate() {
+            const now = new Date();
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            currentDateDisplay.textContent = now.toLocaleDateString('en-US', options);
+        }
+
+        // Initialize the admin panel when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            initAdminPanel();
+        });
+    </script>
+</body>
+</html>
